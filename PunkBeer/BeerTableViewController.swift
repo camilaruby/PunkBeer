@@ -7,18 +7,35 @@
 //
 
 import UIKit
+import Kingfisher
 
 class BeerTableViewController: UITableViewController {
+    
+    @IBOutlet  weak var beerTableView: UITableView!
+    
+    lazy var ListBeer = [Beer]()
+    var beerSelected: Beer?
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem()
+    
+        loadBeers()
     }
+    
+    func loadBeers(){
+        
+        REST.getBeers { beerListResult in
+            guard let beers = beerListResult else { return }
+            DispatchQueue.main.async {
+                self.ListBeer = beers
+                self.tableView.reloadData()
+                
+            }
+        }
+    }
+    
+
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -29,12 +46,41 @@ class BeerTableViewController: UITableViewController {
 
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
-        return 0
+        return 1
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return 0
+       return ListBeer.count
+  
+    }
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "beerCell") as! BeerCell
+        
+        // Configure the cell...
+        
+        let url = ImageResource(downloadURL: URL(string: ListBeer[indexPath.row].imageURL!)!, cacheKey: ListBeer[indexPath.row].name)
+        let abv = String(format: "%.1f", ListBeer[indexPath.row].abv ?? 0.0)
+        
+        cell.ImgvWBeer.kf.setImage(with: url)
+        cell.lblnome.text = ListBeer[indexPath.row].name
+        cell.teor.text = "Teor alcoólico: \(abv)"
+
+        
+        return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        beerSelected = ListBeer[indexPath.row]
+        performSegue(withIdentifier: "Beer", sender: self)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "Beer" {
+           let beers = segue.destination as! BeerViewController
+           beers.beer = self.beerSelected
+        }
     }
 
     /*
